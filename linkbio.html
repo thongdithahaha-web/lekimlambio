@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeKimLam bio</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+body{margin:0;padding:0;background:#000;color:white;overflow-x:hidden;font-family:'Inter',sans-serif}
+
+
+/* ================= FULL-SCREEN LOADING SEQUENCE ================= */
+#overlay{--loader-a:#168bff;--loader-b:#00e5ff;position:fixed;inset:0;z-index:999;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#04060d;transition:opacity .9s ease}
+#loading-canvas{position:absolute;inset:0;z-index:3;width:100%;height:100%;opacity:.5;pointer-events:none}
+.loading-panel{position:absolute;left:0;right:0;z-index:2;height:50.2%;background:#04060d;transition:transform .9s cubic-bezier(.75,0,.2,1)}
+.loading-panel.top{top:0}.loading-panel.bottom{bottom:0}
+#overlay.is-exiting{opacity:0;pointer-events:none}
+#overlay.is-exiting .loading-panel.top{transform:translateY(-101%)}
+#overlay.is-exiting .loading-panel.bottom{transform:translateY(101%)}
+.loading-content{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;color:#fff;transition:opacity .35s ease,transform .35s ease,filter .35s ease}
+#overlay.is-exiting .loading-content{opacity:0;transform:scale(1.35);filter:blur(6px)}
+.loader-rings{position:relative;display:grid;width:min(230px,60vw);height:min(230px,60vw);place-items:center}
+.loader-ring{position:absolute;inset:0;border:1px dashed rgba(255,255,255,.28);border-radius:50%;animation:spin-loader 14s linear infinite}
+.loader-ring:nth-child(2){inset:22px;border-style:solid;border-color:var(--loader-a) transparent var(--loader-b) transparent;box-shadow:0 0 22px color-mix(in srgb,var(--loader-a) 60%,transparent);animation-duration:2s}
+.loader-ring:nth-child(3){inset:46px;border-style:solid;border-color:transparent var(--loader-b) transparent var(--loader-a);animation-duration:1.3s;animation-direction:reverse}
+.loader-ring:nth-child(4){inset:68px;border:3px solid transparent;border-top-color:#fff;animation-duration:.8s}
+.loader-core{position:relative;display:grid;width:78px;height:78px;place-items:center;border-radius:50%;font-size:36px;background:radial-gradient(circle,color-mix(in srgb,var(--loader-a) 55%,#000),#04060d 75%);box-shadow:0 0 40px var(--loader-a),inset 0 0 20px color-mix(in srgb,var(--loader-b) 50%,transparent);animation:core-pulse 1.2s ease-in-out infinite}
+@keyframes spin-loader{to{transform:rotate(360deg)}}
+@keyframes core-pulse{50%{transform:scale(1.14);box-shadow:0 0 70px var(--loader-b),inset 0 0 26px var(--loader-b)}}
+#loader-title{position:relative;display:flex;color:color-mix(in srgb,var(--loader-a) 70%,#fff);font:700 clamp(28px,8.5vw,54px)/1 'Courier New',monospace;letter-spacing:.03em;text-shadow:0 0 14px var(--loader-a);animation:loader-glitch .45s 2.6s 2}
+#loader-title span{display:inline-block;min-width:.6em;text-align:center}
+#loader-title span.done{color:#fff;text-shadow:0 0 12px var(--loader-a),0 0 34px var(--loader-b)}
+@keyframes loader-glitch{25%{transform:translate(-4px,1px);filter:drop-shadow(4px 0 #f0f) drop-shadow(-4px 0 #0ff)}60%{transform:translate(4px,-1px);filter:drop-shadow(-4px 0 #f0f) drop-shadow(4px 0 #0ff)}}
+.loading-progress{width:min(300px,70vw);height:4px;overflow:hidden;border-radius:9px;background:rgba(255,255,255,.14)}
+.loading-progress span{display:block;width:0;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--loader-a),var(--loader-b),#fff);box-shadow:0 0 14px var(--loader-b)}
+.loading-status{display:flex;align-items:center;gap:14px;color:#9fb0d8;font:600 12px 'Courier New',monospace;letter-spacing:.3em;text-transform:uppercase}
+.loading-status strong{min-width:3.4ch;color:#fff;text-align:right}
+.loading-scan{position:absolute;top:50%;left:0;z-index:5;width:100%;height:3px;margin-top:-1px;transform:scaleX(0);opacity:0;background:linear-gradient(90deg,transparent,#fff,var(--loader-b),#fff,transparent);box-shadow:0 0 30px 6px var(--loader-b)}
+#overlay.is-exiting .loading-scan{animation:scan-flash .6s ease-out}
+@keyframes scan-flash{35%{transform:scaleX(1);opacity:1}to{transform:scaleX(1);opacity:0}}
+@media(prefers-reduced-motion:reduce){.loader-ring,.loader-core{animation-duration:4s}.loading-panel,.loading-content{transition-duration:.2s}}
+
+/* ================= STARFIELD ================= */
+#space-canvas{position:fixed;top:0;left:0;z-index:-1}
+
+/* ================= NEON CARD (GIỮ NGUYÊN GỐC) ================= */
+.neon-card{
+position:relative;
+background:rgba(255,255,255,.05);
+border-radius:16px;
+overflow:hidden;
+display:block;
+margin-bottom:16px;
+backdrop-filter:blur(5px);
+transition:.4s cubic-bezier(.175,.885,.32,1.275);
+opacity:0;
+transform:translateY(40px);
+}
+
+.neon-card.show{
+opacity:1;
+transform:translateY(0);
+}
+
+.neon-card:hover{
+transform:scale(1.05) translateY(-5px);
+box-shadow:0 0 40px var(--glow-main);
+}
+
+.neon-card::before{
+content:'';
+position:absolute;
+top:-50%;left:-50%;
+width:200%;height:200%;
+background:conic-gradient(transparent,var(--color-1),var(--color-2),var(--color-3),transparent);
+animation:rotate-border 3.5s linear infinite;
+}
+.neon-card::after{
+content:'';
+position:absolute;
+inset:2px;
+background:#0a0a0c;
+border-radius:14px;
+z-index:0;
+}
+.card-content{
+position:relative;
+z-index:1;
+padding:14px 20px;
+display:flex;
+align-items:center;
+}
+@keyframes rotate-border{100%{transform:rotate(360deg)}}
+
+/* ================= MUSIC BUTTON ================= */
+.music-btn{
+position:fixed;bottom:30px;right:30px;width:70px;height:70px;
+border-radius:50%;
+background:rgba(255,255,255,.1);
+backdrop-filter:blur(15px);
+display:flex;justify-content:center;align-items:center;
+cursor:pointer;z-index:100;border:2px solid rgba(255,255,255,.3);
+transition:.5s;
+}
+.music-btn.playing{
+animation:spin-disc 4s linear infinite;
+border-color:#00f2ea;
+box-shadow:0 0 30px #00f2ea;
+}
+@keyframes spin-disc{100%{transform:rotate(360deg)}}
+
+/* Avatar */
+.avatar-box{
+position:relative;padding:4px;
+background:linear-gradient(45deg,#00f2ea,#ff0050,#7000ff);
+border-radius:50%;
+}
+</style>
+</head>
+<body>
+
+<!-- ================= OVERLAY ================= -->
+<div id="overlay">
+<canvas id="loading-canvas"></canvas>
+<div class="loading-panel top"></div><div class="loading-panel bottom"></div>
+<div class="loading-content">
+<div class="loader-rings"><div class="loader-ring"></div><div class="loader-ring"></div><div class="loader-ring"></div><div class="loader-ring"></div><div class="loader-core">🎓</div></div>
+<div id="loader-title" aria-label="_lkimlamdev"></div>
+<div class="loading-progress"><span id="loading-progress"></span></div>
+<div class="loading-status"><span id="loading-label">ĐANG TẢI HỌC LIỆU</span><strong id="loading-percent">0%</strong></div>
+</div>
+<div class="loading-scan"></div>
+</div>
+
+<canvas id="space-canvas"></canvas>
+
+<audio id="bg-music" loop>
+<source src="./lnua.mp3" type="audio/mpeg">
+</audio>
+
+<div id="music-control" class="music-btn" onclick="toggleMusic()">
+<i class="fa-solid fa-compact-disc text-white text-3xl"></i>
+</div>
+
+<!-- ================= MAIN CONTENT ================= -->
+<div id="main-content" class="flex flex-col items-center justify-center min-h-screen py-10 px-4 opacity-0 transition-opacity duration-1000 overflow-y-auto">
+<div class="max-w-md w-full z-10 pb-20">
+
+<div class="text-center mb-10">
+<div class="inline-block avatar-box mb-4">
+<img src="./avatar.jpeg" class="w-28 h-28 rounded-full object-cover shadow-[0_0_40px_#00f2ea] transition duration-500 hover:scale-110 hover:shadow-[0_0_60px_#ff0050]">
+</div>
+<h1 class="font-['Orbitron'] text-4xl font-black">
+    DEV <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+        LEKIMLAM
+    </span>
+</h1>
+<p class="mt-3 text-sm text-slate-400 tracking-wide">
+    Bạn có thể liên hệ tôi thông qua các nền tảng ở phía dưới
+</p>
+<div class="space-y-4 mt-12">
+
+
+<a href="https://www.facebook.com/Lamsk1605" target="_blank" class="neon-card" style="--color-1:#1877F2; --color-2:#00d2ff; --color-3:#fff; --glow-main:rgba(24,119,242,0.5)">
+<div class="card-content">
+  <div class="w-12 h-12 bg-[#1877F2] rounded-xl flex items-center justify-center text-xl">
+    <i class="fa-brands fa-facebook-f"></i>
+  </div>
+
+  <div class="ml-4 flex-grow">
+    <h2 class="font-bold">Facebook</h2>
+  </div>
+
+  <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-white transition-colors"></i>
+</div>
+
+<a href="https://www.tiktok.com/@lam16_5?_r=1&_t=ZS-93po0pNdup3" target="_blank" class="neon-card" style="--color-1:#ff0050; --color-2:#00f2ea; --color-3:#fff; --glow-main:rgba(255,0,80,0.5)">
+<div class="card-content">
+<div class="w-12 h-12 bg-black border border-white/20 rounded-xl flex items-center justify-center text-xl"><i class="fa-brands fa-tiktok"></i></div>
+<div class="ml-4 flex-grow"><h2 class="font-bold">TikTok</h2></div>
+ <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-white transition-colors"></i>
+</div>
+</a>
+
+<a href="https://zalo.me/0971954070" target="_blank" class="neon-card" style="--color-1:#0068FF; --color-2:#fff; --color-3:#00c6ff; --glow-main:rgba(0,104,255,0.5)">
+<div class="card-content">
+<div class="w-12 h-12 bg-[#0068FF] rounded-xl flex items-center justify-center text-[10px] font-black">ZALO</div>
+<div class="ml-4 flex-grow"><h2 class="font-bold">Zalo</h2></div>
+ <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-white transition-colors"></i>
+</div>
+</a>
+
+<a href="https://discord.com/users/1257544998753406978" target="_blank" class="neon-card" style="--color-1:#5865F2; --color-2:#9d50bb; --color-3:#6e48aa; --glow-main:rgba(88,101,242,0.5)">
+<div class="card-content">
+<div class="w-12 h-12 bg-[#5865F2] rounded-xl flex items-center justify-center text-xl"><i class="fa-brands fa-discord"></i></div>
+<div class="ml-4 flex-grow"><h2 class="font-bold">Discord</h2></div>
+ <i class="fa-solid fa-chevron-right text-slate-600 group-hover:text-white transition-colors"></i>
+</div>
+</a>
+<a href="https://github.com/lekimlam" target="_blank" class="neon-card"
+style="--color-1:#ffffff; --color-2:#333; --color-3:#999; --glow-main:rgba(255,255,255,0.25)">
+<div class="card-content">
+<div class="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-xl">
+<i class="fa-brands fa-github"></i>
+</div>
+<div class="ml-4 flex-grow">
+<h2 class="font-bold">GitHub</h2>
+<p class="text-[10px] text-slate-500">SOURCE CODE</p>
+</div>
+<i class="fa-solid fa-chevron-right text-slate-600 transition-colors"></i>
+</div>
+</a>
+
+</div>
+</div>
+</div>
+
+<script>
+const overlay=document.getElementById('overlay');
+const audio=document.getElementById('bg-music');
+const mainContent=document.getElementById('main-content');
+const control=document.getElementById('music-control');
+const cards=document.querySelectorAll('.neon-card');
+const loaderTitle=document.getElementById('loader-title');
+const loadingPercent=document.getElementById('loading-percent');
+const loadingProgress=document.getElementById('loading-progress');
+const loadingCanvas=document.getElementById('loading-canvas');
+const loadingContext=loadingCanvas.getContext('2d');
+const loaderName='_lkimlamdev';
+const scrambleChars='01<>/{}[]#%&=+*?';
+const rainChars='01<>/{}_lkimlamdev';
+let loaderWidth,loaderHeight,rainColumns,rainDrops=[],rainActive=true;
+
+function resizeLoadingCanvas(){
+loaderWidth=loadingCanvas.width=window.innerWidth;
+loaderHeight=loadingCanvas.height=window.innerHeight;
+rainColumns=Math.ceil(loaderWidth/16);
+rainDrops=Array.from({length:rainColumns},()=>Math.random()*-30);
+}
+
+function animateLoadingRain(){
+if(!rainActive)return;
+loadingContext.fillStyle='rgba(4,6,13,.16)';
+loadingContext.fillRect(0,0,loaderWidth,loaderHeight);
+loadingContext.font='15px monospace';
+for(let column=0;column<rainColumns;column++){
+loadingContext.fillStyle=column%3?'#0fb877':'#8be04e';
+loadingContext.fillText(rainChars[Math.floor(Math.random()*rainChars.length)],column*16,rainDrops[column]*16);
+if(rainDrops[column]*16>loaderHeight&&Math.random()>.975)rainDrops[column]=0;
+rainDrops[column]++;
+}
+setTimeout(()=>requestAnimationFrame(animateLoadingRain),45);
+}
+
+const loaderLetters=Array.from(loaderName,()=>{
+const letter=document.createElement('span');
+letter.textContent='0';
+loaderTitle.appendChild(letter);
+return letter;
+});
+const loadingStarted=performance.now();
+function animateLoadingText(now){
+const elapsed=now-loadingStarted;
+const progress=Math.min(elapsed/3100,1);
+const easedProgress=1-Math.pow(1-progress,2);
+loaderLetters.forEach((letter,index)=>{
+if(elapsed>=500+index*200){
+letter.textContent=loaderName[index];
+letter.classList.add('done');
+}else{
+letter.textContent=scrambleChars[Math.floor(Math.random()*scrambleChars.length)];
+}
+});
+loadingPercent.textContent=`${Math.floor(easedProgress*100)}%`;
+loadingProgress.style.width=`${easedProgress*100}%`;
+if(progress<1)requestAnimationFrame(animateLoadingText);
+else{
+loadingPercent.textContent='100%';
+setTimeout(()=>{
+overlay.classList.add('is-exiting');
+rainActive=false;
+setTimeout(()=>{
+overlay.style.display='none';
+mainContent.style.opacity='1';
+document.body.style.overflowY='auto';
+cards.forEach((card,index)=>{
+setTimeout(()=>card.classList.add('show'),index*200);
+});
+},1000);
+},350);
+}
+}
+
+resizeLoadingCanvas();
+window.addEventListener('resize',resizeLoadingCanvas);
+animateLoadingRain();
+requestAnimationFrame(animateLoadingText);
+
+/* Toggle music */
+function toggleMusic(){
+if(audio.paused){
+audio.play();
+control.classList.add('playing');
+}else{
+audio.pause();
+control.classList.remove('playing');
+}
+}
+
+/* Starfield */
+const canvas=document.getElementById('space-canvas');
+const ctx=canvas.getContext('2d');
+let width,height,stars=[];
+function initStars(){
+width=canvas.width=window.innerWidth;
+height=canvas.height=window.innerHeight;
+stars=[];
+for(let i=0;i<350;i++){
+stars.push({x:Math.random()*width,y:Math.random()*height,s:Math.random()*1.8,v:Math.random()*0.6+0.1,o:Math.random()});
+}
+}
+function animateStars(){
+ctx.clearRect(0,0,width,height);
+ctx.fillStyle="white";
+stars.forEach(s=>{
+ctx.globalAlpha=s.o;
+ctx.beginPath();
+ctx.arc(s.x,s.y,s.s,0,Math.PI*2);
+ctx.fill();
+s.y-=s.v;
+if(s.y<0)s.y=height;
+});
+requestAnimationFrame(animateStars);
+}
+window.addEventListener('resize',initStars);
+initStars();
+animateStars();
+</script>
+<!-- ===== CYBER SCROLL POWER FOOTER ===== -->
+<div id="power-footer" class="cyber-footer">
+    <div class="cyber-line"></div>
+    <div class="cyber-text" data-text="POWER BY LEKIMLAM">
+        POWER BY LEKIMLAM
+    </div>
+</div>
+
+<style>
+.cyber-footer{
+position:relative;
+margin-top:5px;
+text-align:center;
+padding:20px 0 20px;
+opacity:0;
+transform:translateY(30px);
+transition:1s cubic-bezier(.17,.67,.83,.67);
+}
+
+.cyber-footer.show{
+opacity:1;
+transform:translateY(0);
+}
+
+.cyber-line{
+width:60%;
+height:2px;
+margin:0 auto 20px;
+background:linear-gradient(90deg,transparent,#00f2ea,#ff0050,#7000ff,transparent);
+background-size:200%;
+animation:lineMove 3s linear infinite;
+box-shadow:0 0 20px #00f2ea;
+}
+
+.cyber-text{
+font-family:'Orbitron',sans-serif;
+font-size:14px;
+letter-spacing:6px;
+font-weight:700;
+position:relative;
+color:#00f2ea;
+animation:neonBlink 2s infinite alternate;
+text-shadow:
+0 0 5px #00f2ea,
+0 0 15px #00f2ea,
+0 0 30px #ff0050,
+0 0 50px #7000ff;
+}
+
+/* Glitch layer */
+.cyber-text::before,
+.cyber-text::after{
+content:attr(data-text);
+position:absolute;
+left:0;
+top:0;
+width:100%;
+overflow:hidden;
+}
+
+.cyber-text::before{
+color:#ff0050;
+z-index:-1;
+animation:glitch1 2s infinite linear alternate-reverse;
+}
+
+.cyber-text::after{
+color:#00f2ea;
+z-index:-2;
+animation:glitch2 2.5s infinite linear alternate-reverse;
+}
+
+@keyframes neonBlink{
+0%{opacity:1}
+50%{opacity:.7}
+100%{opacity:1}
+}
+
+@keyframes glitch1{
+0%{transform:translate(2px,-2px)}
+20%{transform:translate(-2px,2px)}
+40%{transform:translate(1px,-1px)}
+60%{transform:translate(-1px,1px)}
+80%{transform:translate(2px,1px)}
+100%{transform:translate(-2px,-1px)}
+}
+
+@keyframes glitch2{
+0%{transform:translate(-2px,1px)}
+20%{transform:translate(2px,-1px)}
+40%{transform:translate(-1px,2px)}
+60%{transform:translate(1px,-2px)}
+80%{transform:translate(-2px,-2px)}
+100%{transform:translate(2px,2px)}
+}
+
+@keyframes lineMove{
+0%{background-position:0%}
+100%{background-position:200%}
+}
+</style>
+
+<script>
+const powerFooter = document.getElementById("power-footer");
+
+window.addEventListener("scroll",()=>{
+const scrollY = window.scrollY;
+const pageHeight = document.body.scrollHeight;
+const windowHeight = window.innerHeight;
+
+/* Khi kéo xuống 85% trang thì mới hiện */
+if(scrollY + windowHeight > pageHeight * 0.85){
+    powerFooter.classList.add("show");
+}
+});
+</script>
+
+</div>
+
+</body>
+</html>
