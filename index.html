@@ -244,11 +244,16 @@ control.setAttribute('aria-pressed',String(isPlaying));
 }
 
 async function startMusic(){
-if(musicUnavailable||!audio.paused)return;
+if(musicUnavailable)return;
 try{
+audio.volume=0.7;
 await audio.play();
+syncMusicControl();
 }catch(error){
-if(error.name==='NotAllowedError'||error.name==='AbortError')return;
+if(error.name==='NotAllowedError'||error.name==='AbortError'){
+console.log('Autoplay bị trình duyệt chặn:',error);
+return;
+}
 musicUnavailable=true;
 console.warn('Không thể phát ./lekimlam.mp3:',error);
 }
@@ -266,7 +271,16 @@ document.addEventListener('pointerdown',event=>{
 if(!control.contains(event.target))startMusic();
 });
 document.addEventListener('keydown',startMusic);
-startMusic();
+window.addEventListener('load',async()=>{
+audio.volume=0.7;
+try{
+await audio.play();
+control.classList.add('playing');
+syncMusicControl();
+}catch(error){
+console.log('Autoplay bị trình duyệt chặn:',error);
+}
+});
 
 function resizeLoadingCanvas(){
 loaderWidth=loadingCanvas.width=window.innerWidth;
