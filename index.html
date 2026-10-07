@@ -138,7 +138,7 @@ border-radius:50%;
 
 <canvas id="space-canvas"></canvas>
 
-<audio id="bg-music" loop>
+<audio id="bg-music" autoplay loop preload="auto" playsinline>
 <source src="./lekimlam.mp3" type="audio/mpeg">
 </audio>
 
@@ -234,6 +234,39 @@ const loaderName='_lkimlamdev';
 const scrambleChars='01<>/{}[]#%&=+*?';
 const rainChars='01<>/{}_lkimlamdev';
 let loaderWidth,loaderHeight,rainColumns,rainDrops=[],rainActive=true;
+let musicUnavailable=false;
+
+function syncMusicControl(){
+const isPlaying=!audio.paused&&!audio.ended;
+control.classList.toggle('playing',isPlaying);
+control.setAttribute('aria-label',isPlaying?'Tắt nhạc nền':'Bật nhạc nền');
+control.setAttribute('aria-pressed',String(isPlaying));
+}
+
+async function startMusic(){
+if(musicUnavailable||!audio.paused)return;
+try{
+await audio.play();
+}catch(error){
+if(error.name==='NotAllowedError'||error.name==='AbortError')return;
+musicUnavailable=true;
+console.warn('Không thể phát ./lekimlam.mp3:',error);
+}
+}
+
+audio.addEventListener('play',syncMusicControl);
+audio.addEventListener('playing',syncMusicControl);
+audio.addEventListener('pause',syncMusicControl);
+audio.addEventListener('ended',syncMusicControl);
+audio.addEventListener('error',()=>{
+musicUnavailable=true;
+console.warn('Không tải được file nhạc ./lekimlam.mp3.');
+});
+document.addEventListener('pointerdown',event=>{
+if(!control.contains(event.target))startMusic();
+});
+document.addEventListener('keydown',startMusic);
+startMusic();
 
 function resizeLoadingCanvas(){
 loaderWidth=loadingCanvas.width=window.innerWidth;
@@ -280,6 +313,7 @@ loadingProgress.style.width=`${easedProgress*100}%`;
 if(progress<1)requestAnimationFrame(animateLoadingText);
 else{
 loadingPercent.textContent='100%';
+startMusic();
 setTimeout(()=>{
 overlay.classList.add('is-exiting');
 rainActive=false;
@@ -303,11 +337,9 @@ requestAnimationFrame(animateLoadingText);
 /* Toggle music */
 function toggleMusic(){
 if(audio.paused){
-audio.play();
-control.classList.add('playing');
+startMusic();
 }else{
 audio.pause();
-control.classList.remove('playing');
 }
 }
 
